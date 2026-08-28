@@ -1,23 +1,70 @@
 package ec.edu.uteq.appweb.biblioteca.web.controller;
 
+import ec.edu.uteq.appweb.biblioteca.domain.EstadoPrestamo;
+import ec.edu.uteq.appweb.biblioteca.domain.Prestamo;
+import ec.edu.uteq.appweb.biblioteca.service.PrestamoService;
+import ec.edu.uteq.appweb.biblioteca.web.dto.ApiResponse;
+import ec.edu.uteq.appweb.biblioteca.web.dto.PageMeta;
+import ec.edu.uteq.appweb.biblioteca.web.dto.PrestamoRequest;
+import ec.edu.uteq.appweb.biblioteca.web.dto.PrestamoResponse;
+import ec.edu.uteq.appweb.biblioteca.web.mapper.PrestamoMapper;
+import jakarta.validation.Valid;
+import java.net.URI;
+import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * TODO-U4-1: API REST de prestamos.
- *
- *   GET  /api/v1/prestamos?estado=ACTIVO   paginado con meta
- *   POST /api/v1/prestamos                 201 + Location, rol BIBLIOTECARIO o ADMIN
- *   POST /api/v1/prestamos/{id}/devolucion 200, rol BIBLIOTECARIO o ADMIN
- *
- * Observe que PrestamoService ya lanza ReglaNegocioException cuando el socio
- * supera los tres prestamos activos o cuando no hay ejemplares: eso debe salir
- * como 409 Conflict en formato ProblemDetail, y ya lo hace el manejador global.
- * No lo capture usted en el controlador.
- */
 @RestController
 @RequestMapping("/api/v1/prestamos")
 public class PrestamoController {
 
-    // TODO-U4-1
+    private final PrestamoService servicio;
+    private final PrestamoMapper mapper;
+
+    public PrestamoController(PrestamoService servicio, PrestamoMapper mapper) {
+        this.servicio = servicio;
+        this.mapper = mapper;
+    }
+
+    @GetMapping
+    public ApiResponse<List<PrestamoResponse>> listar(
+            @RequestParam(required = false) EstadoPrestamo estado,
+            @PageableDefault(size = 20) Pageable paginacion) {
+        EstadoPrestamo filtro = estado != null ? estado : EstadoPrestamo.ACTIVO;
+        Page<Prestamo> pagina = servicio.listarPorEstado(filtro, paginacion);
+        List<PrestamoResponse> datos = pagina.getContent().stream().map(mapper::aRespuesta).toList();
+        return ApiResponse.ok(datos, "Prestamos listados", PageMeta.de(pagina));
+    }
+
+    @GetMapping("/{id}")
+    public ApiResponse<PrestamoResponse> buscar(@PathVariable Long id) {
+        return ApiResponse.ok(mapper.aRespuesta(servicio.buscarPorId(id)), "Prestamo encontrado");
+    }
+
+    @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'BIBLIOTECARIO')")
+    public ResponseEntity<ApiResponse<PrestamoResponse>> registrar(@Valid @RequestBody PrestamoRequest solicitud) {
+        Prestamo prestamo = servicio.registrar(solicitud.libroId(), solicitud.socioId(), solicitud.diasPrestamo());
+        PrestamoResponse cuerpo = mapper.aRespuesta(prestamo);
+        return ResponseEntity
+                .created(URI.create("/api/v1/prestamos/" + prestamo.getId()))
+                .body(ApiResponse.ok(cuerpo, "Prestamo registrado"));
+    }
+
+    @PostMapping("/{id}/devolucion")
+    @PreAuthorize("hasAnyRole('ADMIN', 'BIBLIOTECARIO')")
+    public ApiResponse<PrestamoResponse> devolver(@PathVariable Long id) {
+        Prestamo prestamo = servicio.devolver(id);
+        return ApiResponse.ok(mapper.aRespuesta(prestamo), "Devolucion registrada");
+    }
 }
