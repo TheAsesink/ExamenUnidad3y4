@@ -48,12 +48,14 @@ public class SocioController {
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Buscar socio por ID")
     public ApiResponse<SocioResponse> buscar(@PathVariable Long id) {
         return ApiResponse.ok(mapper.aRespuesta(servicio.buscarPorId(id)), "Socio encontrado");
     }
 
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'BIBLIOTECARIO')")
+    @Operation(summary = "Crear socio", description = "Requiere rol ADMIN o BIBLIOTECARIO. Devuelve 201 con Location")
     public ResponseEntity<ApiResponse<SocioResponse>> crear(@Valid @RequestBody SocioRequest solicitud) {
         Socio creado = servicio.crear(solicitud);
         SocioResponse cuerpo = mapper.aRespuesta(creado);
@@ -64,6 +66,7 @@ public class SocioController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'BIBLIOTECARIO')")
+    @Operation(summary = "Actualizar socio")
     public ApiResponse<SocioResponse> actualizar(@PathVariable Long id,
                                                  @Valid @RequestBody SocioRequest solicitud) {
         Socio actualizado = servicio.actualizar(id, solicitud);
@@ -72,6 +75,7 @@ public class SocioController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Eliminar socio", description = "Borrado logico. Requiere rol ADMIN")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         servicio.desactivar(id);
         return ResponseEntity.noContent().build();
