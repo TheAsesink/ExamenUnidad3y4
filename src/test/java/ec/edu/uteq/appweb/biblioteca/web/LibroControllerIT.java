@@ -186,6 +186,28 @@ class LibroControllerIT extends BaseIntegracionTest {
                 .andExpect(jsonPath("$.meta").exists());
     }
 
+    @Test
+    @DisplayName("GET /api/v1/libros con filtro categoriaId devuelve resultados")
+    void listarLibrosConFiltroCategoria() throws Exception {
+        mockMvc.perform(get("/api/v1/libros")
+                        .header("Authorization", "Bearer " + getToken("admin", "Admin123!"))
+                        .param("categoriaId", "1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data").isArray());
+    }
+
+    @Test
+    @DisplayName("GET /api/v1/libros con filtro anioDesde devuelve resultados")
+    void listarLibrosConFiltroAnioDesde() throws Exception {
+        mockMvc.perform(get("/api/v1/libros")
+                        .header("Authorization", "Bearer " + getToken("admin", "Admin123!"))
+                        .param("anioDesde", "2000"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data").isArray());
+    }
+
     private String getToken(String username, String password) throws Exception {
         String body = """
                 {
