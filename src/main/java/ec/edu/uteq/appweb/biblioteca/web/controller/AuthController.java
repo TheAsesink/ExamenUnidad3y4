@@ -44,6 +44,7 @@ public class AuthController {
         LoginResponse respuesta = new LoginResponse(
                 usuario.getUsername(),
                 usuario.getRol().name(),
+                token,
                 "Bearer",
                 jwtService.expiracionEnSegundos());
 
