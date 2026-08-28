@@ -50,4 +50,9 @@ public class AuthController {
 
         return ApiResponse.ok(respuesta, "Login exitoso");
     }
+
+    @PostMapping("/logout")
+    public ApiResponse<String> logout() {
+        return ApiResponse.ok("Sesion cerrada exitosamente");
+    }
 }
