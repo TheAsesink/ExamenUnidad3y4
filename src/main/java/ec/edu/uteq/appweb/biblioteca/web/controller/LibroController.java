@@ -12,7 +12,6 @@ import ec.edu.uteq.appweb.biblioteca.web.dto.PageMeta;
 import ec.edu.uteq.appweb.biblioteca.web.mapper.LibroMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.responses.ApiResponseDoc;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.net.URI;
@@ -48,6 +47,7 @@ public class LibroController {
     }
 
     @GetMapping
+    @Operation(summary = "Listar libros", description = "Listado paginado con filtros opcionales: titulo, categoriaId, anioDesde")
     public ApiResponse<List<LibroResponse>> listar(
             @RequestParam(required = false) String titulo,
             @RequestParam(required = false) Long categoriaId,
@@ -59,11 +59,13 @@ public class LibroController {
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Buscar libro por ID")
     public ApiResponse<LibroResponse> buscar(@PathVariable Long id) {
         return ApiResponse.ok(mapper.aRespuesta(servicio.buscarPorId(id)), "Libro encontrado");
     }
 
     @GetMapping("/{id}/enriquecido")
+    @Operation(summary = "Libro enriquecido", description = "Combina datos locales con Open Library")
     public ApiResponse<LibroEnriquecidoResponse> enriquecido(@PathVariable Long id) {
         Libro libro = servicio.buscarPorId(id);
         LibroResponse libroResponse = mapper.aRespuesta(libro);
@@ -71,8 +73,9 @@ public class LibroController {
         OpenLibraryResponse externo = null;
         try {
             externo = openLibraryClient.consultarPorIsbn(libro.getIsbn());
+        } catch (ec.edu.uteq.appweb.biblioteca.exception.ServicioExternoException e) {
+            throw e;
         } catch (Exception e) {
-            // Si falla, los campos externos quedan null
         }
 
         LibroEnriquecidoResponse respuesta = new LibroEnriquecidoResponse(
@@ -87,6 +90,7 @@ public class LibroController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Crear libro", description = "Requiere rol ADMIN. Devuelve 201 con Location")
     public ResponseEntity<ApiResponse<LibroResponse>> crear(@Valid @RequestBody LibroRequest solicitud) {
         Libro creado = servicio.crear(solicitud);
         LibroResponse cuerpo = mapper.aRespuesta(creado);
@@ -97,6 +101,7 @@ public class LibroController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Actualizar libro", description = "Requiere rol ADMIN")
     public ApiResponse<LibroResponse> actualizar(@PathVariable Long id,
                                                  @Valid @RequestBody LibroRequest solicitud) {
         Libro actualizado = servicio.actualizar(id, solicitud);
@@ -105,6 +110,7 @@ public class LibroController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Eliminar libro", description = "Borrado logico. Requiere rol ADMIN")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         servicio.desactivar(id);
         return ResponseEntity.noContent().build();

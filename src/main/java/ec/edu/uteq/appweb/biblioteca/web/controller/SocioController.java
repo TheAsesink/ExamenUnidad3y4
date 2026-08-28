@@ -7,6 +7,7 @@ import ec.edu.uteq.appweb.biblioteca.web.dto.PageMeta;
 import ec.edu.uteq.appweb.biblioteca.web.dto.SocioRequest;
 import ec.edu.uteq.appweb.biblioteca.web.dto.SocioResponse;
 import ec.edu.uteq.appweb.biblioteca.web.mapper.SocioMapper;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.net.URI;
@@ -39,6 +40,7 @@ public class SocioController {
     }
 
     @GetMapping
+    @Operation(summary = "Listar socios", description = "Listado paginado de socios activos")
     public ApiResponse<List<SocioResponse>> listar(@PageableDefault(size = 20) Pageable paginacion) {
         Page<Socio> pagina = servicio.listarActivos(paginacion);
         List<SocioResponse> datos = pagina.getContent().stream().map(mapper::aRespuesta).toList();
