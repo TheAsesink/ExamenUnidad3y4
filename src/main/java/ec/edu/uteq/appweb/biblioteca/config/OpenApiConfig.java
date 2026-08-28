@@ -1,29 +1,35 @@
 package ec.edu.uteq.appweb.biblioteca.config;
 
+import io.swagger.v3.oas.models.Components;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Contact;
+import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-/**
- * ============================================================================
- * TODO-U4-3: DOCUMENTACION OPENAPI 3 CON SWAGGER UI
- * ============================================================================
- *
- * La dependencia springdoc-openapi-starter-webmvc-ui 3.1.0 ya esta en el pom y
- * la ruta de la interfaz ya esta fijada en application.yml
- * (springdoc.swagger-ui.path: /api/docs).
- *
- * Falta que usted:
- *   1. Declare un @Bean OpenAPI con el titulo, la version y el contacto del equipo.
- *   2. Declare el esquema de seguridad bearerAuth de tipo HTTP, scheme "bearer",
- *      bearerFormat "JWT", y lo agregue como requisito de seguridad global.
- *   3. Anote cada endpoint con @Operation(summary, description) y @ApiResponses
- *      declarando los codigos 200, 201, 400, 401, 403 y 404 que realmente devuelve.
- *   4. Agrupe los controladores con @Tag.
- *
- * Criterio de verificacion de la Guia: Swagger UI accesible y con todos los
- * endpoints documentados con sus esquemas de peticion y respuesta.
- */
 @Configuration
 public class OpenApiConfig {
 
-    // TODO-U4-3: @Bean public OpenAPI apiBiblioteca() Ellipsis
+    @Bean
+    public OpenAPI apiBiblioteca() {
+        final String securitySchemeName = "bearerAuth";
+        return new OpenAPI()
+                .info(new Info()
+                        .title("Biblioteca U4 API")
+                        .version("1.0.0")
+                        .description("API REST para el sistema de biblioteca - Unidad IV")
+                        .contact(new Contact()
+                                .name("Kevin Guerrero")
+                                .email("0999595561kevin@gmail.com")))
+                .addSecurityItem(new SecurityRequirement().addList(securitySchemeName))
+                .components(new Components()
+                        .addSecuritySchemes(securitySchemeName,
+                                new SecurityScheme()
+                                        .name(securitySchemeName)
+                                        .type(SecurityScheme.Type.HTTP)
+                                        .scheme("bearer")
+                                        .bearerFormat("JWT")));
+    }
 }
