@@ -18,14 +18,13 @@ import org.springframework.web.client.RestClient;
 public class RestClientConfig {
 
     @Bean
-    public RestClient restClientExterno(RestClient.Builder builder,
-                                        @Value("${app.api-externa.base-url}") String baseUrl,
+    public RestClient restClientExterno(@Value("${app.api-externa.base-url}") String baseUrl,
                                         @Value("${app.api-externa.connect-timeout-ms:3000}") long conexionMs,
                                         @Value("${app.api-externa.read-timeout-ms:5000}") long lecturaMs) {
         SimpleClientHttpRequestFactory fabrica = new SimpleClientHttpRequestFactory();
         fabrica.setConnectTimeout(Duration.ofMillis(conexionMs));
         fabrica.setReadTimeout(Duration.ofMillis(lecturaMs));
-        return builder
+        return RestClient.builder()
                 .baseUrl(baseUrl)
                 .requestFactory(fabrica)
                 .build();

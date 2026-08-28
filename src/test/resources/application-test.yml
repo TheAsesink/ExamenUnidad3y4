@@ -7,9 +7,7 @@ spring:
     type: none
   jpa:
     hibernate:
-      ddl-auto: validate
-  flyway:
-    enabled: true
+      ddl-auto: none
 
 app:
   jwt:
