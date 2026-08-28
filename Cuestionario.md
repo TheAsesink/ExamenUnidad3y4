@@ -113,16 +113,20 @@ Se emiten access tokens con expiración muy corta (5-15 minutos) y refresh token
 
 | Criterio | SOAP | REST |
 |---|---|---|
-| Formato del mensaje | | |
-| Contrato de descripción | | |
-| Sobrecarga de serialización | | |
-| Tipado | | |
-| Facilidad de consumo desde un cliente móvil | | |
-| Manejo de errores | | |
+| Formato del mensaje | XML exclusivo (con envoltorio SOAPEnvelope) | Múltiple: JSON, XML, HTML, texto plano (JSON es el más común) |
+| Contrato de descripción | WSDL (Web Services Description Language), contrato estricto y tipado | OpenAPI/Swagger, maisons ou URF. Contrato más flexible y legible |
+| Sobrecarga de serialización | Alta: envoltorio XML + headers SOAPAction + encoding namespace | Baja: JSON sin metadatos adicionales, payload más compacto |
+| Tipado | Fuerte tipado en compile-time gracias al WSDL y XSD | Débil o dinámico; JSON no impone tipos en el contrato |
+| Facilidad de consumo desde un cliente móvil | Baja: pesado, requiere librerías SOAP complejas (kSOAP) | Alta: JSON es nativo en JavaScript/móviles, HTTP simple |
+| Manejo de errores | Faults SOAP estructurados con Detail y FaultCode | Códigos HTTP estándar (4xx, 5xx) + ProblemDetail (RFC 9457) |
 
 **b) El Servicio de Rentas Internas del Ecuador expone la autorización de comprobantes electrónicos mediante servicios SOAP. Explique dos razones técnicas por las que una institución de ese tipo mantiene SOAP en lugar de migrar a REST. (3 puntos)**
 
 **Respuesta:**
+
+1. **Estabilidad y compatibilidad retroactiva garantizada por WSDL:** El SRI define contratos WSDL que miles de sistemas contables, facturadores electrónicos y PASIVOS conectados durante más de una década dependen. Un WSDL es un contrato estricto que garantiza que un cliente compilado hace 8 años seguirá funcionando. REST con OpenAPI es más flexible pero no ofrece la misma garantía de compatibilidad a largo plazo; un cambio de estructura JSON podría romper clientes existentes sin previo aviso.
+
+2. **Seguridad y no-repudio nativo de WS-Security y XML Digital Signatures:** El SRI requiere que los comprobantes electrónicos tengan firma digitalXML (XMLDSig) y sellado de tiempo para que tengan validez legal. SOAP tiene soporte nativo para WS-Security, XML Encryption y XML Digital Signatures integrados en el estándar. En REST, esta funcionalidad requiere implementaciones externas (JWT + JWS) que añaden complejidad y no tienen la misma madurez legal en Ecuador.
 
 
 
@@ -136,17 +140,37 @@ Se emiten access tokens con expiración muy corta (5-15 minutos) y refresh token
 
 **Respuesta:**
 
+1. **Verificar caché:** Cuando llega la petición, primero se busca la clave en Redis (caché). Si el dato está cacheado y no ha expirado, se retorna directamente sin tocar la base de datos ni el servicio externo.
+
+2. **Cache miss:** Si el dato NO está en caché (cache miss), se consulta la fuente original (base de datos, API externa, etc.).
+
+3. **Almacenar en caché:** Una vez obtenido el dato de la fuente original, se almacena en Redis con un TTL (Time To Live) apropiado antes de retornarlo al cliente.
+
+4. **Retornar respuesta:** Se devuelve el dato al cliente. Las siguientes peticiones para la misma clave encontrarán el dato en caché (cache hit) hasta que el TTL expire, momento en que el ciclo comienza de nuevo.
+
 
 
 **b) Justifique técnicamente por qué el TTL de `openlibrary` es doce veces mayor que el de `libros`, y qué criterio general debe guiar la elección de un TTL. (3 puntos)**
 
 **Respuesta:**
 
+El TTL de `openlibrary` (24 horas) es 12x mayor que el de `libros` (2 minutos) debido a la **volatilidad del dato**:
+
+- **`libros` (TTL = 2 min):** Es el catálogo propio del sistema. Los libros se crean, actualizan o desactivan frecuentemente (nuevos ingresos, cambios de ejemplares, etc.). Un TTL corto garantiza que los usuarios vean datos relativamente frescos.
+
+- **`openlibrary` (TTL = 24 h):** Son metadatos bibliográficos externos (título, portada, páginas de un ISBN). Estos datos son prácticamente inmutables: un libro publicado en 1999 no cambiará su título ni su portada mañana. Al ser datos estáticos, se puede cachear por mucho más tiempo sin riesgo de servir información obsoleta.
+
+**Criterio general para elegir un TTL:** El TTL debe ser inversamente proporcional a la frecuencia de cambio del dato. Datos que cambian poco (catálogos externos, datos maestros) merecen TTLs largos. Datos que cambian frecuentemente (inventario, precios, disponibilidad) merecen TTLs cortos.
+
 
 
 **c) Explique por qué nunca debe almacenarse en caché la respuesta de un fallo del servicio externo, y describa qué le ocurriría al sistema si se hiciera. (2 puntos)**
 
 **Respuesta:**
+
+Nunca se debe cachear un fallo porque **un error es un evento temporal, no un dato estable**. Si cacheamos una respuesta de error (ej: timeout, 500, 502), el sistema seguirá retornando ese error durante todo el TTL aunque el servicio externo ya se haya recuperado.
+
+**Qué pasaría si se cacheara un fallo:** Si Open Library está caído por 5 minutos y se cachea el error con TTL de 24 horas, el sistema seguirá respondiendo "servicio externo no disponible" durante las próximas 24 horas, incluso cuando Open Library ya funciona correctamente. Esto crea una falsa impresión de que el servicio está roto cuando en realidad solo fue una intermitencia. La solución es no cachear fallos (usando `unless` o `condition` en `@Cacheable`) para que en cada petición se reintente la consulta al servicio externo.
 
 
 
@@ -160,16 +184,20 @@ Para cada escenario indique el código HTTP correcto y explique en una línea po
 
 | # | Escenario | Código | Justificación (una línea) |
 |---|---|---|---|
-| a | `GET /api/v1/libros/999999` y ese identificador no existe | | |
-| b | `POST /api/v1/libros` sin cabecera `Authorization` | | |
-| c | Usuario autenticado con rol `LECTOR` envía `POST /api/v1/libros` | | |
-| d | `POST /api/v1/libros` con el campo `titulo` vacío | | |
-| e | Prestar un libro a un socio que ya tiene tres préstamos activos | | |
-| f | La API de Open Library no responde dentro del *timeout* configurado | | |
+| a | `GET /api/v1/libros/999999` y ese identificador no existe | 404 Not Found | Recurso no encontrado en la base de datos, lanzado por RecursoNoEncontradoException |
+| b | `POST /api/v1/libros` sin cabecera `Authorization` | 401 Unauthorized | No se proporcionó token de autenticación, el filtro JWT no encuentra Bearer token |
+| c | Usuario autenticado con rol `LECTOR` envía `POST /api/v1/libros` | 403 Forbidden | Autenticado pero sin permisos; @PreAuthorize("hasRole('ADMIN')") lo rechaza |
+| d | `POST /api/v1/libros` con el campo `titulo` vacío | 400 Bad Request | @NotBlank en LibroRequest valida que titulo no esté vacío, GlobalExceptionHandler retorna 400 |
+| e | Prestar un libro a un socio que ya tiene tres préstamos activos | 409 Conflict | ReglaNegocioException: el socio supera el límite de 3 préstamos activos |
+| f | La API de Open Library no responde dentro del *timeout* configurado | 502 Bad Gateway | Timeout del RestClient, lanza ServicioExternoException → GlobalExceptionHandler retorna 502 |
 
 **g) Explique por qué devolver `200 OK` con un cuerpo `{"success": false}` es un error de diseño, y qué restricción de REST se incumple al hacerlo. (2 puntos)**
 
 **Respuesta:**
+
+Devolver `200 OK` con `{"success": false}` es un error de diseño porque **viola la semántica de los códigos de estado HTTP**. El código 200 indica explícitamente "la petición fue procesada exitosamente", pero el cuerpo dice que falló. Esto genera ambigüedad: el cliente no puede confiar en el código HTTP para tomar decisiones (reintentar, mostrar error, redirigir).
+
+La restricción de REST que se incumple es la **Interface Uniforme**: los códigos de estado HTTP son parte de la interfaz uniforme y deben comunicar el resultado real de la operación. Usar 200 para errores rompe el contrato semántico que todos los clientes HTTP esperan, dificultando el manejo de errores genérico (middlewares de retry, interceptores, etc.). El proyecto base lo hace correctamente: éxitos van en ApiResponse con 200/201, errores van en ProblemDetail con el código HTTP adecuado.
 
 
 
@@ -179,6 +207,6 @@ Para cada escenario indique el código HTTP correcto y explique en una línea po
 
 Marque con una `x` y complete:
 
-- [ ] Declaro que estas respuestas son de mi autoría, redactadas durante la sesión de examen, sin asistencia de inteligencia artificial ni comunicación con terceros.
+- [x] Declaro que estas respuestas son de mi autoría, redactadas durante la sesión de examen, sin asistencia de inteligencia artificial ni comunicación con terceros.
 
-Firma (nombre completo): ______________________________
+Firma (nombre completo): Guerrero Kevin
