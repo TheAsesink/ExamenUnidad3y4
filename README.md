@@ -192,3 +192,41 @@ pdflatex informe.tex
 ```
 
 Motor: `pdflatex`. Bibliografía: `bibtex`. Pasadas mínimas: 3. Sin esta documentación, y sin que el PDF se regenere desde el `.tex` clonando el repositorio, la calificación es CERO.
+
+---
+
+## 9. Implementación Unidad IV - Estado completado
+
+### Cuestionario Teórico (Parte A)
+- [x] A1: Restricciones de REST (6 restricciones de Fielding)
+- [x] A2: Anatomía y ciclo de vida del JWT
+- [x] A3: SOAP frente a REST (tabla comparativa)
+- [x] A4: Cache-aside (patrón y justificación TTL)
+- [x] A5: Códigos de estado HTTP
+
+### Práctica (Parte B)
+- [x] B1: GET /api/v1/libros con filtros (titulo, categoriaId, anioDesde) y paginación
+- [x] B2: POST /api/v1/libros con JWT y rol ADMIN (201 + Location)
+- [x] B3: OpenLibraryClient con cache-aside y manejo de errores
+- [x] B4: 10 pruebas de integración en LibroControllerIT
+
+### Endpoints implementados
+- POST /api/v1/auth/login - Autenticación JWT
+- GET /api/v1/libros - Listado con filtros y paginación
+- GET /api/v1/libros/{id} - Búsqueda por ID
+- GET /api/v1/libros/{id}/enriquecido - Datos locales + Open Library
+- POST /api/v1/libros - Crear (ADMIN)
+- PUT /api/v1/libros/{id} - Actualizar (ADMIN)
+- DELETE /api/v1/libros/{id} - Borrado lógico (ADMIN)
+- GET /api/v1/socios - Listado de socios
+- POST /api/v1/socios - Crear socio (ADMIN/BIBLIOTECARIO)
+- GET /api/v1/prestamos - Listado de préstamos
+- POST /api/v1/prestamos - Registrar préstamo
+- POST /api/v1/prestamos/{id}/devolucion - Devolver libro
+
+### Credenciales de prueba
+| Usuario | Contraseña | Rol |
+|---|---|---|
+| admin | Admin123! | ADMIN |
+| bibliotecario | Biblio123! | BIBLIOTECARIO |
+| lector | Lector123! | LECTOR |
