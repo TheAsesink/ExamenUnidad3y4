@@ -8,10 +8,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import ec.edu.uteq.appweb.biblioteca.BaseIntegracionTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 class SocioControllerIT extends BaseIntegracionTest {
+
+    @Autowired
+    private MockMvc mockMvc;
 
     @Test
     @DisplayName("GET /api/v1/socios responde 200 con envoltorio y metadatos")
@@ -66,7 +71,7 @@ class SocioControllerIT extends BaseIntegracionTest {
                 .andReturn();
 
         String responseBody = result.getResponse().getContentAsString();
-        return org.springframework.test.web.servlet.result.JsonPath.parse(responseBody)
+        return com.jayway.jsonpath.JsonPath.parse(responseBody)
                 .read("$.data.token", String.class);
     }
 }
