@@ -8,6 +8,7 @@ import ec.edu.uteq.appweb.biblioteca.web.dto.PageMeta;
 import ec.edu.uteq.appweb.biblioteca.web.dto.PrestamoRequest;
 import ec.edu.uteq.appweb.biblioteca.web.dto.PrestamoResponse;
 import ec.edu.uteq.appweb.biblioteca.web.mapper.PrestamoMapper;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.net.URI;
@@ -39,6 +40,7 @@ public class PrestamoController {
     }
 
     @GetMapping
+    @Operation(summary = "Listar prestamos", description = "Listado paginado por estado (ACTIVO por defecto)")
     public ApiResponse<List<PrestamoResponse>> listar(
             @RequestParam(required = false) EstadoPrestamo estado,
             @PageableDefault(size = 20) Pageable paginacion) {
@@ -49,12 +51,14 @@ public class PrestamoController {
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Buscar prestamo por ID")
     public ApiResponse<PrestamoResponse> buscar(@PathVariable Long id) {
         return ApiResponse.ok(mapper.aRespuesta(servicio.buscarPorId(id)), "Prestamo encontrado");
     }
 
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'BIBLIOTECARIO')")
+    @Operation(summary = "Registrar prestamo", description = "Requiere rol ADMIN o BIBLIOTECARIO")
     public ResponseEntity<ApiResponse<PrestamoResponse>> registrar(@Valid @RequestBody PrestamoRequest solicitud) {
         Prestamo prestamo = servicio.registrar(solicitud.libroId(), solicitud.socioId(), solicitud.diasPrestamo());
         PrestamoResponse cuerpo = mapper.aRespuesta(prestamo);
@@ -65,6 +69,7 @@ public class PrestamoController {
 
     @PostMapping("/{id}/devolucion")
     @PreAuthorize("hasAnyRole('ADMIN', 'BIBLIOTECARIO')")
+    @Operation(summary = "Devolver libro", description = "Registra la devolucion de un prestamo")
     public ApiResponse<PrestamoResponse> devolver(@PathVariable Long id) {
         Prestamo prestamo = servicio.devolver(id);
         return ApiResponse.ok(mapper.aRespuesta(prestamo), "Devolucion registrada");

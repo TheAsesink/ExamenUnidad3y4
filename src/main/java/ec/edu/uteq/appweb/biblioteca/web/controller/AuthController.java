@@ -6,6 +6,7 @@ import ec.edu.uteq.appweb.biblioteca.security.JwtService;
 import ec.edu.uteq.appweb.biblioteca.web.dto.ApiResponse;
 import ec.edu.uteq.appweb.biblioteca.web.dto.LoginRequest;
 import ec.edu.uteq.appweb.biblioteca.web.dto.LoginResponse;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -34,6 +35,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
+    @Operation(summary = "Iniciar sesion", description = "Autentica usuario y retorna JWT")
     public ApiResponse<LoginResponse> login(@Valid @RequestBody LoginRequest solicitud) {
         Usuario usuario = usuarios.findByUsernameAndActivoTrue(solicitud.username())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciales invalidas"));
@@ -54,6 +56,7 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
+    @Operation(summary = "Cerrar sesion")
     public ApiResponse<String> logout() {
         return ApiResponse.ok("Sesion cerrada exitosamente");
     }
