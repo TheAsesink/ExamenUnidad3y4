@@ -6,6 +6,7 @@ import ec.edu.uteq.appweb.biblioteca.security.JwtService;
 import ec.edu.uteq.appweb.biblioteca.web.dto.ApiResponse;
 import ec.edu.uteq.appweb.biblioteca.web.dto.LoginRequest;
 import ec.edu.uteq.appweb.biblioteca.web.dto.LoginResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -17,6 +18,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/v1/auth")
+@Tag(name = "Autenticacion", description = "API de login y logout")
 public class AuthController {
 
     private final UsuarioRepository usuarios;

@@ -7,6 +7,7 @@ import ec.edu.uteq.appweb.biblioteca.web.dto.PageMeta;
 import ec.edu.uteq.appweb.biblioteca.web.dto.SocioRequest;
 import ec.edu.uteq.appweb.biblioteca.web.dto.SocioResponse;
 import ec.edu.uteq.appweb.biblioteca.web.mapper.SocioMapper;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.List;
@@ -26,6 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/socios")
+@Tag(name = "Socios", description = "API REST de socios de la biblioteca")
 public class SocioController {
 
     private final SocioService servicio;

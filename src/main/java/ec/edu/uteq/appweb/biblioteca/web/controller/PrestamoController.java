@@ -8,6 +8,7 @@ import ec.edu.uteq.appweb.biblioteca.web.dto.PageMeta;
 import ec.edu.uteq.appweb.biblioteca.web.dto.PrestamoRequest;
 import ec.edu.uteq.appweb.biblioteca.web.dto.PrestamoResponse;
 import ec.edu.uteq.appweb.biblioteca.web.mapper.PrestamoMapper;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.List;
@@ -26,6 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/prestamos")
+@Tag(name = "Prestamos", description = "API REST de prestamos de libros")
 public class PrestamoController {
 
     private final PrestamoService servicio;
