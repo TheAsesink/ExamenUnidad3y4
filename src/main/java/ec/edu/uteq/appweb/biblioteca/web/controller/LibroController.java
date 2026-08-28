@@ -10,6 +10,10 @@ import ec.edu.uteq.appweb.biblioteca.web.dto.LibroRequest;
 import ec.edu.uteq.appweb.biblioteca.web.dto.LibroResponse;
 import ec.edu.uteq.appweb.biblioteca.web.dto.PageMeta;
 import ec.edu.uteq.appweb.biblioteca.web.mapper.LibroMapper;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponseDoc;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.List;
@@ -30,6 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/libros")
+@Tag(name = "Libros", description = "API REST del catalogo de libros")
 public class LibroController {
 
     private final LibroService servicio;
